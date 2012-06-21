@@ -6,7 +6,6 @@
 utString * utStringCreate(int initialSize)
 {
     utString *s = (utString *)calloc(1, sizeof(utString));
-    utStringReserve(s, initialSize);
     return s;
 }
 
@@ -44,8 +43,11 @@ void utStringClear(utString *s)
 void utStringSet(utString *s, const char *text)
 {
     int len = (int)strlen(text);
-    utStringReserve(s, len);
-    strcpy(s->buffer, text);
+    if(len)
+    {
+        utStringReserve(s, len);
+        strcpy(s->buffer, text);
+    }
     s->length = len;
 }
 
@@ -90,10 +92,9 @@ void utStringConcatv(utString *s, const char *format, va_list args)
     va_list argsCopy;
     va_copy(argsCopy, args);
 
+    textLen = vsnprintf(NULL, 0, format, argsCopy);
     if(textLen == 0)
         return;
-
-    textLen = vsnprintf(NULL, 0, format, argsCopy);
     newLen = textLen + s->length;
 
     utStringReserve(s, newLen);

@@ -6,4 +6,4 @@ set(SRCS
 )
 
 add_executable(utconsole ${SRCS})
-target_link_libraries(utconsole urltoys)
+target_link_libraries(utconsole urltoys readline)

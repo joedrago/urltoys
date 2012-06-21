@@ -1,21 +1,18 @@
 #ifndef UTCONTEXT_H
 #define UTCONTEXT_H
 
-#include "utArray.h"
+#include "utList.h"
 
-typedef struct utHerp
-{
-    int a;
-} utHerp;
-
-ARRAY_DECLARE(utHerp);
+typedef void (*utOutputCB)(const char *line);
 
 typedef struct utContext
 {
-    utHerpArray herps;
+    utList *current;
+    utOutputCB outputCB;
 } utContext;
 
 utContext *utContextCreate();
 void utContextDestroy(utContext *context);
+int utContextParse(utContext *context, char *text);
 
 #endif

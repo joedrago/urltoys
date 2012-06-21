@@ -16,7 +16,7 @@ typedef struct utString
     int flags;
 } utString;
 
-utString * utStringCreate(int initialSize);
+utString * utStringCreate();
 void utStringReserve(utString *s, int newSize);
 void utStringDestroy(utString *s);
 

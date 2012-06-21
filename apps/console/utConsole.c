@@ -1,16 +1,28 @@
-#include "utString.h"
+#include "utContext.h"
 
 #include <stdio.h>
+#include <readline/readline.h>
 
 void test()
 {
-    utString *s = utStringCreate(0);
-    utStringSet(s, "herp derp");
-    utStringSet(s, "lulz");
-    utStringSet(s, "herp derp skerp");
-    utStringConcatf(s, " %s %s", "werp", "nerp");
-    printf("string: '%s'\n", utStringSafe(s));
-    utStringDestroy(s);
+    utContext *context = utContextCreate();
+    utString *prompt = utStringCreate();
+    char *rawLine;
+
+    while(1)
+    {
+        utStringPrintf(prompt, "U[%d]> ", context->current->lines.count);
+        rawLine = readline(utStringSafe(prompt));
+
+        if(rawLine && utContextParse(context, rawLine))
+        {
+            add_history(rawLine);
+        }
+
+        free(rawLine);
+    }
+
+    utContextDestroy(context);
 }
 
 int main(int argc, char **argv)

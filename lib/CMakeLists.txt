@@ -1,6 +1,8 @@
 set(SRCS
     utContext.c
     utContext.h
+    utList.c
+    utList.h
     utString.c
     utString.h
 )
