@@ -2,10 +2,37 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
-utString * utStringCreate(int initialSize)
+ARRAY_IMPLEMENT(utString, utStringDestroy);
+
+utString * utStringCreate()
 {
     utString *s = (utString *)calloc(1, sizeof(utString));
+    return s;
+}
+
+utString * utStringCreateFrom(const char *text)
+{
+    utString *s = utStringCreate();
+    utStringSet(s, text);
+    return s;
+}
+
+utString * utStringCreateSubstr(utString *orig, int start, int length)
+{
+    utString *s = utStringCreate();
+    printf("substr(%d, %d)\n", start, length);
+    if((start >= 0) && (start < orig->length))
+    {
+        int maxLength = orig->length - start;
+        if(length > maxLength)
+            length = maxLength;
+        utStringReserve(s, length);
+        memcpy(s->buffer, orig->buffer + start, length);
+        s->buffer[length] = 0;
+        s->length = length;
+    }
     return s;
 }
 
@@ -109,3 +136,84 @@ const char *utStringSafe(utString *s)
 
     return s->buffer;
 }
+
+static void utStringUnescapeQuotes(utString *s)
+{
+    int head = 0;
+    int tail = 0;
+    while(tail < s->length)
+    {
+        if((tail == s->length-1) || (s->buffer[tail] != '\\') || (s->buffer[tail+1] != '\\'))
+        {
+            s->buffer[head] = s->buffer[tail];
+            head++;
+        }
+        tail++;
+    }
+    s->buffer[head] = 0;
+    s->length = head;
+}
+
+utStringArray * utStringSplitQuoted(utString *s)
+{
+    utStringArray *array = utStringArrayCreate();
+    if(s->length)
+    {
+        int i;
+        int front = 0;
+        int quoted = 0;
+        char prev = 0;
+        for(i = 0; i < s->length; prev = s->buffer[i], i++)
+        {
+            if(quoted)
+            {
+                if((s->buffer[i] == '"') && (prev != '\\'))
+                {
+                    utString *newString = utStringCreateSubstr(s, front, i - front);
+                    utStringUnescapeQuotes(newString);
+                    utStringArrayPush(array, newString);
+                    front = i + 1;
+                    quoted = 0;
+                }
+            }
+            else
+            {
+                if((s->buffer[i] == '"') && (prev != '\\'))
+                {
+                    front = i + 1;
+                    quoted = 1;
+                }
+                else if(s->buffer[i] == ' ')
+                {
+                    if((i - front) > 0)
+                        utStringArrayPush(array, utStringCreateSubstr(s, front, i - front));
+                    front = i + 1;
+                }
+            }
+        }
+        if(quoted)
+        {
+            // unbalanced quotes, bail out
+            utStringArrayDestroy(array);
+            array = NULL;
+        }
+        else
+        {
+            if((i - front) > 0)
+            {
+                // get the leftovers
+                utStringArrayPush(array, utStringCreateSubstr(s, front, i - front));
+            }
+        }
+    }
+    if(array)
+    {
+        // Remove escapes from quotes
+        int i;
+        for(i = 0; i < array->count; i++)
+        {
+        }
+    }
+    return array;
+}
+
