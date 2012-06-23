@@ -2,7 +2,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 ARRAY_IMPLEMENT(utString, utStringDestroy);
 
@@ -22,7 +21,6 @@ utString * utStringCreateFrom(const char *text)
 utString * utStringCreateSubstr(utString *orig, int start, int length)
 {
     utString *s = utStringCreate();
-    printf("substr(%d, %d)\n", start, length);
     if((start >= 0) && (start < orig->length))
     {
         int maxLength = orig->length - start;
@@ -65,6 +63,11 @@ void utStringClear(utString *s)
         free(s->buffer);
     s->buffer = NULL;
     s->length = 0;
+}
+
+void utStringCopy(utString *s, utString *t)
+{
+    utStringSet(s, utStringSafe(t));
 }
 
 void utStringSet(utString *s, const char *text)
@@ -162,13 +165,30 @@ static void utStringUnescapeQuotes(utString *s)
 
 utStringArray * utStringSplitQuoted(utString *s)
 {
-    utStringArray *array = utStringArrayCreate();
+    utStringArray *array = NULL;
     if(s->length)
     {
         int i;
         int front = 0;
         int quoted = 0;
         int escapeCount = 0;
+        int onlySpaces = 1;
+
+        for(i = 0; i < s->length; i++)
+        {
+            if(s->buffer[i] != ' ')
+            {
+                onlySpaces = 0;
+                break;
+            }
+        }
+
+        if(onlySpaces)
+        {
+            return NULL;
+        }
+
+        array = utStringArrayCreate();
         for(i = 0; i < s->length; i++)
         {
             if(quoted)

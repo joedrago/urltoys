@@ -30,14 +30,19 @@ int utCommandParse(utCommand *command, const char *line)
             utString *s = pieces->data[i];
             printf("arg%d: '%s'\n", i, utStringSafe(s));
         }
+        if(pieces->count)
+        {
+            utStringCopy(&command->name, pieces->data[0]);
+        }
         utStringArrayDestroy(pieces);
+        return 1;
     }
     return 0;
 }
 
 static void defaultOutputCB(const char *line)
 {
-    printf("%s\n", line);
+    printf("* %s\n", line);
 }
 
 utContext *utContextCreate()
@@ -55,6 +60,12 @@ void utContextDestroy(utContext *context)
     free(context);
 }
 
+static void walkPrint(utList *list, int i, void *userData)
+{
+    utContext *context = (utContext *)userData;
+    context->outputCB(utStringSafe(&list->lines.data[i]->text));
+}
+
 int utContextParse(utContext *context, const char *text)
 {
     int ret = 1;
@@ -64,12 +75,7 @@ int utContextParse(utContext *context, const char *text)
     {
         if(!strcmp(utStringSafe(&command->name), "show"))
         {
-            int i;
-            for(i = 0; i < context->current->lines.count; i++)
-            {
-                utLine *line = context->current->lines.data[i];
-                context->outputCB(utStringSafe(&line->text));
-            }
+            utListWalk(context->current, LS_ALL, walkPrint, context);
         }
         else
         {

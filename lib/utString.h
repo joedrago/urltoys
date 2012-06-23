@@ -27,6 +27,7 @@ void utStringReserve(utString *s, int newSize);
 void utStringDestroy(utString *s);
 
 void utStringClear(utString *s);
+void utStringCopy(utString *s, utString *t);
 void utStringSet(utString *s, const char *text);
 void utStringSetK(utString *s, const char *text); // keeps text pointer!
 void utStringConcat(utString *s, const char *text);

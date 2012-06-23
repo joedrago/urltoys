@@ -4,6 +4,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct utIntArray
+{
+    int count;
+    int capacity;
+    int *data;
+} utIntArray;
+
+int utIntArrayPush(utIntArray *p, int v);
+int utIntArrayPop(utIntArray *p);
+void utIntArrayClear(utIntArray *p);
+
 #define ARRAY_DECLARE(TYPE)                                                                \
                                                                                            \
 typedef struct TYPE ## Array                                                               \
