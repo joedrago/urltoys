@@ -139,14 +139,20 @@ const char *utStringSafe(utString *s)
 
 static void utStringUnescapeQuotes(utString *s)
 {
+    int dropped = 0;
     int head = 0;
     int tail = 0;
     while(tail < s->length)
     {
-        if((tail == s->length-1) || (s->buffer[tail] != '\\') || (s->buffer[tail+1] != '\\'))
+        if((s->buffer[tail] == '\\') && !dropped)
+        {
+            dropped = 1;
+        }
+        else
         {
             s->buffer[head] = s->buffer[tail];
             head++;
+            dropped = 0;
         }
         tail++;
     }
@@ -162,15 +168,14 @@ utStringArray * utStringSplitQuoted(utString *s)
         int i;
         int front = 0;
         int quoted = 0;
-        char prev = 0;
-        for(i = 0; i < s->length; prev = s->buffer[i], i++)
+        int escapeCount = 0;
+        for(i = 0; i < s->length; i++)
         {
             if(quoted)
             {
-                if((s->buffer[i] == '"') && (prev != '\\'))
+                if((s->buffer[i] == '"') && ((escapeCount % 2) == 0))
                 {
                     utString *newString = utStringCreateSubstr(s, front, i - front);
-                    utStringUnescapeQuotes(newString);
                     utStringArrayPush(array, newString);
                     front = i + 1;
                     quoted = 0;
@@ -178,7 +183,7 @@ utStringArray * utStringSplitQuoted(utString *s)
             }
             else
             {
-                if((s->buffer[i] == '"') && (prev != '\\'))
+                if((s->buffer[i] == '"') && ((escapeCount % 2) == 0))
                 {
                     front = i + 1;
                     quoted = 1;
@@ -190,8 +195,17 @@ utStringArray * utStringSplitQuoted(utString *s)
                     front = i + 1;
                 }
             }
+
+            if(s->buffer[i] == '\\')
+            {
+                escapeCount++;
+            }
+            else
+            {
+                escapeCount = 0;
+            }
         }
-        if(quoted)
+        if(quoted || ((escapeCount % 2) != 0))
         {
             // unbalanced quotes, bail out
             utStringArrayDestroy(array);
@@ -206,12 +220,13 @@ utStringArray * utStringSplitQuoted(utString *s)
             }
         }
     }
+
     if(array)
     {
-        // Remove escapes from quotes
         int i;
         for(i = 0; i < array->count; i++)
         {
+            utStringUnescapeQuotes(array->data[i]);
         }
     }
     return array;

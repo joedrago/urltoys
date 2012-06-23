@@ -12,7 +12,7 @@ typedef struct utCommand
 
 utCommand *utCommandCreate();
 void utCommandDestroy(utCommand *command);
-int utCommandParse(utCommand *context, char *text);
+int utCommandParse(utCommand *context, const char *text);
 
 typedef void (*utOutputCB)(const char *line);
 
@@ -24,6 +24,6 @@ typedef struct utContext
 
 utContext *utContextCreate();
 void utContextDestroy(utContext *context);
-int utContextParse(utContext *context, char *text);
+int utContextParse(utContext *context, const char *text);
 
 #endif

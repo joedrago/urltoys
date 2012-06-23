@@ -16,7 +16,7 @@ void utCommandDestroy(utCommand *command)
     free(command);
 }
 
-int utCommandParse(utCommand *command, char *line)
+int utCommandParse(utCommand *command, const char *line)
 {
     utStringArray *pieces;
 
@@ -55,7 +55,7 @@ void utContextDestroy(utContext *context)
     free(context);
 }
 
-int utContextParse(utContext *context, char *text)
+int utContextParse(utContext *context, const char *text)
 {
     int ret = 1;
     utCommand *command = utCommandCreate();

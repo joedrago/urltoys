@@ -25,6 +25,14 @@ void test()
     utContextDestroy(context);
 }
 
+void test2()
+{
+    utContext *context = utContextCreate();
+    const char *rawLine = "\"\\\\\"";
+    utContextParse(context, rawLine);
+    utContextDestroy(context);
+}
+
 int main(int argc, char **argv)
 {
     test();
