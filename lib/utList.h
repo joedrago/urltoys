@@ -40,6 +40,7 @@ extern const utListSubset LS_ALL[];
 
 utListSubset *utListSubsetCreate(int type);
 void utListSubsetDestroy(utListSubset *subset);
+void utListSubsetPushIndex(utListSubset *subset, int i);
 
 typedef struct utList
 {
@@ -50,8 +51,10 @@ typedef void (*utListWalkCB)(utList *list, int i, void *userData);
 
 utList *utListCreate();
 void utListDestroy(utList *list);
+void utListClear(utList *list);
 void utListPush(utList *list, const char *text);
 void utListWalk(utList *list, const utListSubset *subset, utListWalkCB walkCB, void *userData);
 void utListDelete(utList *list, const utListSubset *subset);
+utListSubset * utListFilterSubstr(utList *list, const utListSubset *toFilter, const char *substr);
 
 #endif

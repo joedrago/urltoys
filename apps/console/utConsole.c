@@ -12,7 +12,7 @@ void test()
     while(1)
     {
         utStringPrintf(prompt, "U[%d]> ", context->current->lines.count);
-        rawLine = readline(utStringSafe(prompt));
+        rawLine = readline(utStringContents(prompt));
 
         if(rawLine && utContextParse(context, rawLine))
         {

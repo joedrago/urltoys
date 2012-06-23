@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static const char EMPTY_STRING[] = "";
+
 ARRAY_IMPLEMENT(utString, utStringDestroy);
 
 utString * utStringCreate()
@@ -27,8 +29,8 @@ utString * utStringCreateSubstr(utString *orig, int start, int length)
         if(length > maxLength)
             length = maxLength;
         utStringReserve(s, length);
-        memcpy(s->buffer, orig->buffer + start, length);
-        s->buffer[length] = 0;
+        memcpy(s->s, orig->s + start, length);
+        s->s[length] = 0;
         s->length = length;
     }
     return s;
@@ -36,15 +38,15 @@ utString * utStringCreateSubstr(utString *orig, int start, int length)
 
 void utStringReserve(utString *s, int newSize)
 {
-    char *originalBuffer = s->buffer;
+    char *originalBuffer = s->s;
     if(newSize <= s->capacity)
         return;
 
-    s->buffer = malloc(sizeof(char) * (newSize + 1));
+    s->s = malloc(sizeof(char) * (newSize + 1));
     if(s->length)
-        memcpy(s->buffer, originalBuffer, s->length + 1);
+        memcpy(s->s, originalBuffer, s->length + 1);
     else
-        s->buffer[0] = 0;
+        s->s[0] = 0;
     if(!(s->flags & USF_CONST))
         free(originalBuffer);
 
@@ -59,15 +61,21 @@ void utStringDestroy(utString *s)
 
 void utStringClear(utString *s)
 {
-    if(s->buffer && !(s->flags & USF_CONST))
-        free(s->buffer);
-    s->buffer = NULL;
+    if(s->s && !(s->flags & USF_CONST))
+        free(s->s);
+    s->s = (char *)EMPTY_STRING;
+    s->flags = USF_CONST;
     s->length = 0;
 }
 
 void utStringCopy(utString *s, utString *t)
 {
-    utStringSet(s, utStringSafe(t));
+    utStringSet(s, utStringContents(t));
+}
+
+int utStringCmp(utString *a, utString *b)
+{
+    return strcmp(a->s, b->s);
 }
 
 void utStringSet(utString *s, const char *text)
@@ -76,7 +84,7 @@ void utStringSet(utString *s, const char *text)
     if(len)
     {
         utStringReserve(s, len);
-        strcpy(s->buffer, text);
+        strcpy(s->s, text);
     }
     s->length = len;
 }
@@ -84,7 +92,7 @@ void utStringSet(utString *s, const char *text)
 void utStringSetK(utString *s, const char *text)
 {
     utStringClear(s);
-    s->buffer = (char *)text;
+    s->s = (char *)text;
     s->length = (int)strlen(text);
     s->flags = USF_CONST;
 }
@@ -94,7 +102,7 @@ void utStringConcat(utString *s, const char *text)
     int textLen = (int)strlen(text);
     int newLen = textLen + s->length;
     utStringReserve(s, newLen);
-    memcpy(s->buffer + s->length, text, textLen+1);
+    memcpy(s->s + s->length, text, textLen+1);
     s->length = newLen;
 }
 
@@ -128,16 +136,8 @@ void utStringConcatv(utString *s, const char *format, va_list args)
     newLen = textLen + s->length;
 
     utStringReserve(s, newLen);
-    vsnprintf(s->buffer + s->length, newLen + 1, format, args);
+    vsnprintf(s->s + s->length, newLen + 1, format, args);
     s->length = newLen;
-}
-
-const char *utStringSafe(utString *s)
-{
-    if(!s->buffer)
-        return "";
-
-    return s->buffer;
 }
 
 static void utStringUnescapeQuotes(utString *s)
@@ -147,19 +147,19 @@ static void utStringUnescapeQuotes(utString *s)
     int tail = 0;
     while(tail < s->length)
     {
-        if((s->buffer[tail] == '\\') && !dropped)
+        if((s->s[tail] == '\\') && !dropped)
         {
             dropped = 1;
         }
         else
         {
-            s->buffer[head] = s->buffer[tail];
+            s->s[head] = s->s[tail];
             head++;
             dropped = 0;
         }
         tail++;
     }
-    s->buffer[head] = 0;
+    s->s[head] = 0;
     s->length = head;
 }
 
@@ -176,7 +176,7 @@ utStringArray * utStringSplitQuoted(utString *s)
 
         for(i = 0; i < s->length; i++)
         {
-            if(s->buffer[i] != ' ')
+            if(s->s[i] != ' ')
             {
                 onlySpaces = 0;
                 break;
@@ -193,7 +193,7 @@ utStringArray * utStringSplitQuoted(utString *s)
         {
             if(quoted)
             {
-                if((s->buffer[i] == '"') && ((escapeCount % 2) == 0))
+                if((s->s[i] == '"') && ((escapeCount % 2) == 0))
                 {
                     utString *newString = utStringCreateSubstr(s, front, i - front);
                     utStringArrayPush(array, newString);
@@ -203,12 +203,12 @@ utStringArray * utStringSplitQuoted(utString *s)
             }
             else
             {
-                if((s->buffer[i] == '"') && ((escapeCount % 2) == 0))
+                if((s->s[i] == '"') && ((escapeCount % 2) == 0))
                 {
                     front = i + 1;
                     quoted = 1;
                 }
-                else if(s->buffer[i] == ' ')
+                else if(s->s[i] == ' ')
                 {
                     if((i - front) > 0)
                         utStringArrayPush(array, utStringCreateSubstr(s, front, i - front));
@@ -216,7 +216,7 @@ utStringArray * utStringSplitQuoted(utString *s)
                 }
             }
 
-            if(s->buffer[i] == '\\')
+            if(s->s[i] == '\\')
             {
                 escapeCount++;
             }

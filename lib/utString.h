@@ -7,12 +7,12 @@
 
 enum utStringFlag
 {
-    USF_CONST = (1 << 0)     // utString does not own buffer
+    USF_CONST = (1 << 0)     // utString does not own s
 };
 
 typedef struct utString
 {
-    char *buffer;
+    char *s;
     int length;
     int capacity;
     int flags;
@@ -27,7 +27,8 @@ void utStringReserve(utString *s, int newSize);
 void utStringDestroy(utString *s);
 
 void utStringClear(utString *s);
-void utStringCopy(utString *s, utString *t);
+void utStringCopy(utString *dst, utString *src);
+int  utStringCmp(utString *a, utString *b);
 void utStringSet(utString *s, const char *text);
 void utStringSetK(utString *s, const char *text); // keeps text pointer!
 void utStringConcat(utString *s, const char *text);
@@ -36,6 +37,6 @@ void utStringConcatv(utString *s, const char *format, va_list args);
 void utStringConcatf(utString *s, const char *format, ...);
 utStringArray * utStringSplitQuoted(utString *s);
 
-const char *utStringSafe(utString *s);
+#define utStringContents(S) (S)->s
 
 #endif

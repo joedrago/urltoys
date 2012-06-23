@@ -30,6 +30,11 @@ void utListSubsetDestroy(utListSubset *subset)
     free(subset);
 }
 
+void utListSubsetPushIndex(utListSubset *subset, int i)
+{
+    utIntArrayPush(&subset->indices, i);
+}
+
 utList *utListCreate()
 {
     utList *list = (utList *)calloc(1, sizeof(utList));
@@ -38,8 +43,13 @@ utList *utListCreate()
 
 void utListDestroy(utList *list)
 {
-    utLineArrayClear(&list->lines);
+    utListClear(list);
     free(list);
+}
+
+void utListClear(utList *list)
+{
+    utLineArrayClear(&list->lines);
 }
 
 void utListPush(utList *list, const char *text)
@@ -98,4 +108,29 @@ void utListDelete(utList *list, const utListSubset *subset)
 {
     utListWalk(list, subset, walkDelete, NULL);
     utLineArraySquash(&list->lines);
+}
+
+struct FilterSubstrData
+{
+    const char *substr;
+    utListSubset *subset;
+};
+
+static void walkFilterSubstr(utList *list, int i, void *userData)
+{
+    struct FilterSubstrData *data = (struct FilterSubstrData *)userData;
+    utLine *line = list->lines.data[i];
+    if(strstr(line->text.s, data->substr))
+    {
+        utListSubsetPushIndex(data->subset, i);
+    }
+}
+
+utListSubset * utListFilterSubstr(utList *list, const utListSubset *toFilter, const char *substr)
+{
+    struct FilterSubstrData data;
+    data.substr = substr;
+    data.subset = utListSubsetCreate(LST_INDICES);
+    utListWalk(list, toFilter, walkFilterSubstr, &data);
+    return data.subset;
 }
