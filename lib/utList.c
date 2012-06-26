@@ -1,5 +1,7 @@
 #include "utList.h"
 
+#include <pcre.h>
+
 const utListSubset LS_ALL[] = { { LST_ALL, 0 } };
 
 ARRAY_IMPLEMENT(utLine, utLineDestroy);
@@ -110,27 +112,61 @@ void utListDelete(utList *list, const utListSubset *subset)
     utLineArraySquash(&list->lines);
 }
 
-struct FilterSubstrData
+struct FilterData
 {
-    const char *substr;
+    const char *text;
+    pcre *regex;
     utListSubset *subset;
 };
 
 static void walkFilterSubstr(utList *list, int i, void *userData)
 {
-    struct FilterSubstrData *data = (struct FilterSubstrData *)userData;
+    struct FilterData *data = (struct FilterData *)userData;
     utLine *line = list->lines.data[i];
-    if(strstr(line->text.s, data->substr))
+    if(strstr(line->text.s, data->text))
     {
         utListSubsetPushIndex(data->subset, i);
     }
 }
 
-utListSubset * utListFilterSubstr(utList *list, const utListSubset *toFilter, const char *substr)
+utListSubset * utListFilterSubstr(utList *list, const utListSubset *toFilter, const char *text)
 {
-    struct FilterSubstrData data;
-    data.substr = substr;
+    struct FilterData data;
+    data.text = text;
     data.subset = utListSubsetCreate(LST_INDICES);
     utListWalk(list, toFilter, walkFilterSubstr, &data);
+    return data.subset;
+}
+
+static void walkFilterRegex(utList *list, int i, void *userData)
+{
+    struct FilterData *data = (struct FilterData *)userData;
+    utLine *line = list->lines.data[i];
+    if(pcre_exec(data->regex, NULL, line->text.s, line->text.length, 0, 0, NULL, 0) >= 0)
+    {
+        utListSubsetPushIndex(data->subset, i);
+    }
+}
+
+utListSubset * utListFilterRegex(utList *list, const utListSubset *toFilter, const char *text, utString *returnError)
+{
+    struct FilterData data;
+    const char *error;
+    int erroffset;
+    data.text = text;
+    data.regex = pcre_compile(data.text, 0, &error, &erroffset, NULL);
+    if(data.regex)
+    {
+        data.subset = utListSubsetCreate(LST_INDICES);
+        utListWalk(list, toFilter, walkFilterRegex, &data);
+        pcre_free(data.regex);
+    }
+    else
+    {
+        if(error && returnError)
+        {
+            utStringSet(returnError, error);
+        }
+    }
     return data.subset;
 }

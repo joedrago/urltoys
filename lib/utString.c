@@ -196,6 +196,7 @@ utStringArray * utStringSplitQuoted(utString *s)
                 if((s->s[i] == '"') && ((escapeCount % 2) == 0))
                 {
                     utString *newString = utStringCreateSubstr(s, front, i - front);
+                    utStringUnescapeQuotes(newString);
                     utStringArrayPush(array, newString);
                     front = i + 1;
                     quoted = 0;
@@ -225,7 +226,7 @@ utStringArray * utStringSplitQuoted(utString *s)
                 escapeCount = 0;
             }
         }
-        if(quoted || ((escapeCount % 2) != 0))
+        if(quoted) // || ((escapeCount % 2) != 0))
         {
             // unbalanced quotes, bail out
             utStringArrayDestroy(array);
@@ -246,7 +247,7 @@ utStringArray * utStringSplitQuoted(utString *s)
         int i;
         for(i = 0; i < array->count; i++)
         {
-            utStringUnescapeQuotes(array->data[i]);
+            //utStringUnescapeQuotes(array->data[i]);
         }
     }
     return array;

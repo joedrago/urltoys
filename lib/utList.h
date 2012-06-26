@@ -56,5 +56,6 @@ void utListPush(utList *list, const char *text);
 void utListWalk(utList *list, const utListSubset *subset, utListWalkCB walkCB, void *userData);
 void utListDelete(utList *list, const utListSubset *subset);
 utListSubset * utListFilterSubstr(utList *list, const utListSubset *toFilter, const char *substr);
+utListSubset * utListFilterRegex(utList *list, const utListSubset *toFilter, const char *regex, utString *returnError);
 
 #endif

@@ -11,6 +11,6 @@ set(SRCS
     utString.h
 )
 
-
 add_library(urltoys ${SRCS})
+target_link_libraries(urltoys pcre)
 

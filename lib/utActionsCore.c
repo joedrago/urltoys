@@ -11,11 +11,22 @@ static void walkPrint(utList *list, int i, void *userData)
 static int utActionShow(struct utAction *action, utCommand *command, struct utContext *context, struct utList *list)
 {
     utListSubset *subset = NULL;
+    utString *error = utStringCreate();
     if(command->args.count)
-        subset = utListFilterSubstr(list, LS_ALL, command->args.data[0]->s);
-    utListWalk(context->current, subset ? subset : LS_ALL, walkPrint, context);
+    {
+        subset = utListFilterRegex(list, LS_ALL, command->args.data[0]->s, error);
+    }
+    if(error->length)
+    {
+        context->errorCB(error->s);
+    }
+    else
+    {
+        utListWalk(context->current, subset ? subset : LS_ALL, walkPrint, context);
+    }
     if(subset)
         utListSubsetDestroy(subset);
+    utStringDestroy(error);
     return 1;
 }
 
